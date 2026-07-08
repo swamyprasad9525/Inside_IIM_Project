@@ -1,11 +1,18 @@
-import type { FinalDecision, EntityResolution } from "@/lib/types";
+import type { FinalDecision, EntityResolution, SelfReview } from "@/lib/types";
 
 interface DecisionCardProps {
   entity: EntityResolution;
   decision: FinalDecision;
+  selfReview: SelfReview;
 }
 
-export function DecisionCard({ entity, decision }: DecisionCardProps) {
+const CONFIDENCE_STYLES: Record<FinalDecision["confidence"], string> = {
+  High: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400",
+  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  Low: "bg-black/5 text-black/60 dark:bg-white/10 dark:text-white/50",
+};
+
+export function DecisionCard({ entity, decision, selfReview }: DecisionCardProps) {
   const isInvest = decision.verdict === "INVEST";
 
   return (
@@ -28,9 +35,21 @@ export function DecisionCard({ entity, decision }: DecisionCardProps) {
         </span>
       </div>
 
-      <p className="mt-3 text-xs uppercase tracking-wide text-black/40 dark:text-white/40">
-        Confidence: {decision.confidence}
-      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide ${CONFIDENCE_STYLES[decision.confidence]}`}
+        >
+          Confidence: {decision.confidence}
+        </span>
+        {selfReview.wasRevised && (
+          <span
+            className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+            title={selfReview.note ?? undefined}
+          >
+            ✓ Self-reviewed and revised for accuracy
+          </span>
+        )}
+      </div>
 
       <p className="mt-4 text-sm leading-relaxed">{decision.thesis}</p>
 

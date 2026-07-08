@@ -45,11 +45,25 @@ export async function tavilySearch(
   const data = (await res.json()) as { results?: TavilyResult[] };
   const results = data.results ?? [];
 
-  return results.map((r) => ({
-    id: nextId(),
-    title: r.title,
-    url: r.url,
-    snippet: r.content?.slice(0, 800) ?? "",
-    category,
-  }));
+  return results
+    .map((r) => ({
+      id: nextId(),
+      title: r.title,
+      url: r.url,
+      snippet: r.content?.slice(0, 800) ?? "",
+      category,
+    }))
+    .filter((s) => !isLowQualitySource(s));
+}
+
+const JUNK_TITLE_PATTERN =
+  /^(menu|home|login|sign in|sign up|cookie policy|privacy policy|terms of service|search|404|not found)$/i;
+
+function isLowQualitySource(s: SourceItem): boolean {
+  const title = s.title?.trim() ?? "";
+  const snippet = s.snippet?.trim() ?? "";
+  if (title.length < 4) return true;
+  if (JUNK_TITLE_PATTERN.test(title)) return true;
+  if (snippet.length < 30) return true;
+  return false;
 }

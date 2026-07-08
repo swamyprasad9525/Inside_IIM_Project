@@ -7,6 +7,7 @@ import type {
   RubricResult,
   CaseArgument,
   FinalDecision,
+  SelfReview,
 } from "@/lib/types";
 
 export const GraphState = Annotation.Root({
@@ -46,6 +47,10 @@ export const GraphState = Annotation.Root({
   decision: Annotation<FinalDecision | null>({
     reducer: (_prev, next) => next,
     default: () => null,
+  }),
+  selfReview: Annotation<SelfReview>({
+    reducer: (_prev, next) => next,
+    default: () => ({ wasRevised: false, note: null }),
   }),
   trace: Annotation<string[]>({
     reducer: (prev, next) => prev.concat(next),

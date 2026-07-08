@@ -94,6 +94,7 @@ export async function runResearchGraph(
     bullCase: lastState.bullCase,
     bearCase: lastState.bearCase,
     decision: lastState.decision,
+    selfReview: lastState.selfReview,
     sources: dedupeSources(lastState.sources),
     trace: lastState.trace,
   };

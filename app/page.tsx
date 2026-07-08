@@ -93,7 +93,11 @@ export default function Home() {
 
       {report && (
         <div className="flex w-full flex-col items-center gap-6">
-          <DecisionCard entity={report.entity} decision={report.decision} />
+          <DecisionCard
+            entity={report.entity}
+            decision={report.decision}
+            selfReview={report.selfReview}
+          />
           <RubricBreakdown rubric={report.rubric} />
           <div className="flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
             <CaseCard caseArg={report.bullCase} />

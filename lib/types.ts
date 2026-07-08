@@ -64,6 +64,11 @@ export interface FinalDecision {
   keyRisks: string[];
 }
 
+export interface SelfReview {
+  wasRevised: boolean;
+  note: string | null;
+}
+
 export interface ResearchReport {
   company: string;
   entity: EntityResolution;
@@ -72,6 +77,7 @@ export interface ResearchReport {
   bullCase: CaseArgument;
   bearCase: CaseArgument;
   decision: FinalDecision;
+  selfReview: SelfReview;
   sources: SourceItem[];
   trace: string[];
 }

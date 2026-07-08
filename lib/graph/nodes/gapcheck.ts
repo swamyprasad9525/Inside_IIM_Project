@@ -18,19 +18,30 @@ export async function gapCheckNode(state: GraphStateType) {
     };
   }
 
-  const findingsText = JSON.stringify(state.findings, null, 2);
-  const gap = await structuredCall(
-    GapSchema,
-    "You review research findings for an investment decision and identify if critical information is missing (e.g. no financial data found at all, or no risk information found). Only flag TRUE gaps that would materially change confidence in a decision — not minor details.",
-    `Company: ${state.entity?.resolvedName}\n\nFindings so far:\n${findingsText}\n\nReturn JSON: { hasCriticalGaps, followUpQueries: [{query, category}] (max 3, only if hasCriticalGaps is true), reasoning }`
-  );
+  try {
+    const findingsText = JSON.stringify(state.findings, null, 2);
+    const gap = await structuredCall(
+      GapSchema,
+      "You review research findings for an investment decision and identify if critical information is missing (e.g. no financial data found at all, or no risk information found). Only flag TRUE gaps that would materially change confidence in a decision — not minor details.",
+      `Company: ${state.entity?.resolvedName}\n\nFindings so far:\n${findingsText}\n\nReturn JSON: { hasCriticalGaps, followUpQueries: [{query, category}] (max 3, only if hasCriticalGaps is true), reasoning }`
+    );
 
-  return {
-    followUpQueries: gap.hasCriticalGaps ? gap.followUpQueries : [],
-    trace: [
-      gap.hasCriticalGaps
-        ? `Gap check: found gaps, running follow-up searches - ${gap.reasoning}`
-        : `Gap check: sufficient evidence found - ${gap.reasoning}`,
-    ],
-  };
+    return {
+      followUpQueries: gap.hasCriticalGaps ? gap.followUpQueries : [],
+      trace: [
+        gap.hasCriticalGaps
+          ? `Gap check: found gaps, running follow-up searches - ${gap.reasoning}`
+          : `Gap check: sufficient evidence found - ${gap.reasoning}`,
+      ],
+    };
+  } catch (err) {
+    return {
+      followUpQueries: [],
+      trace: [
+        `Gap check skipped due to an error, proceeding with available evidence: ${
+          err instanceof Error ? err.message : "unknown error"
+        }`,
+      ],
+    };
+  }
 }

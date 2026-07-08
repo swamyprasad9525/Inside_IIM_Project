@@ -2,24 +2,42 @@ import { ChatOpenAI } from "@langchain/openai";
 import type { z } from "zod";
 
 let llmInstance: ChatOpenAI | null = null;
+let fastLlmInstance: ChatOpenAI | null = null;
 
-export function getLLM(): ChatOpenAI {
-  if (llmInstance) return llmInstance;
-
+function buildClient(model: string): ChatOpenAI {
   const apiKey = process.env.NVIDIA_NIM_API_KEY;
   if (!apiKey) {
     throw new Error("NVIDIA_NIM_API_KEY is not set. Add it to .env.local.");
   }
 
-  llmInstance = new ChatOpenAI({
+  return new ChatOpenAI({
     apiKey,
-    model: process.env.NVIDIA_NIM_MODEL || "meta/llama-3.1-70b-instruct",
+    model,
     temperature: 0.2,
     configuration: {
       baseURL: process.env.NVIDIA_NIM_BASE_URL || "https://integrate.api.nvidia.com/v1",
     },
   });
+}
+
+export function getLLM(): ChatOpenAI {
+  if (!llmInstance) {
+    llmInstance = buildClient(process.env.NVIDIA_NIM_MODEL || "meta/llama-3.1-70b-instruct");
+  }
   return llmInstance;
+}
+
+/**
+ * A smaller/faster model for lightweight steps (entity resolution, gap checks, naming a
+ * competitor, contradiction review) that don't need the full 70B model's reasoning depth.
+ * Cuts overall pipeline latency without touching the quality of the steps that matter most
+ * (synthesis, rubric scoring, the bull/bear debate, and the final decision).
+ */
+export function getFastLLM(): ChatOpenAI {
+  if (!fastLlmInstance) {
+    fastLlmInstance = buildClient(process.env.NVIDIA_NIM_FAST_MODEL || "meta/llama-3.1-8b-instruct");
+  }
+  return fastLlmInstance;
 }
 
 function extractJson(text: string): string {
@@ -39,9 +57,10 @@ function extractJson(text: string): string {
 export async function structuredCall<T>(
   schema: z.ZodType<T>,
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  opts?: { fast?: boolean }
 ): Promise<T> {
-  const llm = getLLM();
+  const llm = opts?.fast ? getFastLLM() : getLLM();
   const jsonInstruction =
     "\n\nRespond with ONLY a single valid JSON object matching the required shape. No markdown code fences, no commentary, no text before or after the JSON.";
 

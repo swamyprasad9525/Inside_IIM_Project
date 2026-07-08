@@ -2,6 +2,7 @@ import { StateGraph, START, END } from "@langchain/langgraph";
 import { GraphState, type GraphStateType } from "./state";
 import { intakeNode } from "./nodes/intake";
 import { researchNode } from "./nodes/research";
+import { peerNode } from "./nodes/peer";
 import { synthesizeNode } from "./nodes/synthesize";
 import { gapCheckNode } from "./nodes/gapcheck";
 import { analyzeNode } from "./nodes/analyze";
@@ -19,6 +20,7 @@ function shouldLoopBack(state: GraphStateType): "research" | "analyze" {
 const graph = new StateGraph(GraphState)
   .addNode("intake", intakeNode)
   .addNode("research", researchNode)
+  .addNode("peer", peerNode)
   .addNode("synthesize", synthesizeNode)
   .addNode("gapcheck", gapCheckNode)
   .addNode("analyze", analyzeNode)
@@ -29,7 +31,9 @@ const graph = new StateGraph(GraphState)
   .addNode("report", reportNode)
   .addEdge(START, "intake")
   .addEdge("intake", "research")
+  .addEdge("intake", "peer")
   .addEdge("research", "synthesize")
+  .addEdge("peer", "synthesize")
   .addEdge("synthesize", "gapcheck")
   .addConditionalEdges("gapcheck", shouldLoopBack, {
     research: "research",

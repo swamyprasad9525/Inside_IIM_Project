@@ -7,6 +7,7 @@ import { DecisionCard } from "@/components/DecisionCard";
 import { RubricBreakdown } from "@/components/RubricBreakdown";
 import { CaseCard } from "@/components/CaseCard";
 import { SourcesList } from "@/components/SourcesList";
+import { FollowUpChat } from "@/components/FollowUpChat";
 import type { ResearchReport, StreamEvent } from "@/lib/types";
 
 export default function Home() {
@@ -71,6 +72,10 @@ export default function Home() {
     }
   }
 
+  function handleCancel() {
+    abortRef.current?.abort();
+  }
+
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center gap-6 px-6 py-16">
       <div className="text-center">
@@ -81,7 +86,17 @@ export default function Home() {
         </p>
       </div>
 
-      <CompanyForm onSubmit={handleSubmit} disabled={isRunning} />
+      <div className="flex w-full max-w-xl flex-col items-center gap-2">
+        <CompanyForm onSubmit={handleSubmit} disabled={isRunning} />
+        {isRunning && (
+          <button
+            onClick={handleCancel}
+            className="text-xs text-black/40 underline underline-offset-2 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="w-full max-w-2xl rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
@@ -104,6 +119,7 @@ export default function Home() {
             <CaseCard caseArg={report.bearCase} />
           </div>
           <SourcesList sources={report.sources} />
+          <FollowUpChat report={report} />
         </div>
       )}
     </main>

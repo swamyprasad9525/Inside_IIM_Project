@@ -67,7 +67,7 @@ export function FollowUpChat({ report }: FollowUpChatProps) {
           onChange={(e) => setQuestion(e.target.value)}
           disabled={isAsking}
           placeholder="e.g. What's driving the risk score?"
-          className="clay-inset flex-1 border-none px-4 py-2.5 text-sm outline-none disabled:opacity-50"
+          className="clay-inset min-w-0 flex-1 border-none px-4 py-2.5 text-sm disabled:opacity-50"
         />
         <button
           type="submit"

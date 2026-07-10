@@ -140,18 +140,30 @@ export default function Home() {
 
         {report && (
           <div className="flex w-full flex-col items-center gap-6">
-            <DecisionCard
-              entity={report.entity}
-              decision={report.decision}
-              selfReview={report.selfReview}
-            />
-            <RubricBreakdown rubric={report.rubric} />
-            <div className="flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
-              <CaseCard caseArg={report.bullCase} />
-              <CaseCard caseArg={report.bearCase} />
+            <div className="clay-fade-in w-full max-w-2xl">
+              <DecisionCard
+                entity={report.entity}
+                decision={report.decision}
+                selfReview={report.selfReview}
+              />
             </div>
-            <SourcesList sources={report.sources} />
-            <FollowUpChat report={report} />
+            <div className="clay-fade-in w-full max-w-2xl" style={{ animationDelay: "0.08s" }}>
+              <RubricBreakdown rubric={report.rubric} />
+            </div>
+            <div className="flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
+              <div className="clay-fade-in flex-1" style={{ animationDelay: "0.16s" }}>
+                <CaseCard caseArg={report.bullCase} />
+              </div>
+              <div className="clay-fade-in flex-1" style={{ animationDelay: "0.22s" }}>
+                <CaseCard caseArg={report.bearCase} />
+              </div>
+            </div>
+            <div className="clay-fade-in w-full max-w-2xl" style={{ animationDelay: "0.3s" }}>
+              <SourcesList sources={report.sources} />
+            </div>
+            <div className="clay-fade-in w-full max-w-2xl" style={{ animationDelay: "0.36s" }}>
+              <FollowUpChat report={report} />
+            </div>
           </div>
         )}
       </main>

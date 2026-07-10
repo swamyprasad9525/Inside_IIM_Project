@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palette pulled from the doguri2 pet: rosy-pink body, deep brown mask, cream muzzle,
+     lavender tail stripe. */
+  --background: #f7ede6;
+  --foreground: #3d2b28;
+
+  --clay-purple: #a594d1;
+  --clay-purple-dark: #7c67ad;
+  --clay-lavender: #efe9fb;
+  --clay-mint: #a8cdb0;
+  --clay-mint-dark: #4c8562;
+  --clay-peach: #eaa8ae;
+  --clay-peach-dark: #b4586a;
+  --clay-cream: #fbeee0;
+
+  --clay-shadow-light: #ffffff;
+  --clay-shadow-dark: rgba(74, 51, 47, 0.24);
+  --clay-ring: rgba(165, 148, 209, 0.35);
 }
 
 @theme inline {
@@ -12,15 +27,261 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background:
+    radial-gradient(rgba(61, 43, 40, 0.05) 1.5px, transparent 1.5px) 0 0 / 22px 22px,
+    var(--background);
+  background-attachment: fixed;
+}
+
+/* Decorative organic clay blobs: gently float/drift, and are individually clickable
+   to "pop" (container ignores clicks in empty space, each blob opts back in). */
+.clay-blobs {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.clay-blob {
+  position: absolute;
+  filter: blur(2px);
+  opacity: 0.55;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: blob-float 15s ease-in-out infinite;
+}
+
+.clay-blob-1 {
+  width: 260px;
+  height: 220px;
+  top: -60px;
+  left: -70px;
+  background: linear-gradient(160deg, var(--clay-purple), var(--clay-lavender));
+  border-radius: 42% 58% 65% 35% / 55% 45% 55% 45%;
+}
+
+.clay-blob-2 {
+  width: 220px;
+  height: 240px;
+  bottom: -80px;
+  right: -60px;
+  background: linear-gradient(200deg, var(--clay-mint), #d7ead9);
+  border-radius: 60% 40% 45% 55% / 45% 55% 45% 55%;
+  animation-delay: 2s;
+}
+
+.clay-blob-3 {
+  width: 160px;
+  height: 160px;
+  top: 55%;
+  right: 6%;
+  background: linear-gradient(160deg, var(--clay-peach), #f6d3d6);
+  border-radius: 55% 45% 60% 40% / 40% 60% 40% 60%;
+  animation-delay: 4s;
+}
+
+.clay-blob-4 {
+  width: 140px;
+  height: 130px;
+  top: 12%;
+  right: 22%;
+  background: linear-gradient(160deg, var(--clay-lavender), var(--clay-purple));
+  border-radius: 50% 50% 40% 60% / 60% 40% 60% 40%;
+  opacity: 0.4;
+  animation-delay: 1s;
+}
+
+.clay-blob-5 {
+  width: 130px;
+  height: 120px;
+  bottom: 8%;
+  left: 8%;
+  background: linear-gradient(160deg, var(--clay-mint), var(--clay-lavender));
+  border-radius: 60% 40% 55% 45% / 45% 60% 40% 55%;
+  opacity: 0.4;
+  animation-delay: 3s;
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  25% { transform: translate(16px, -20px) scale(1.04) rotate(3deg); }
+  50% { transform: translate(-12px, -6px) scale(0.97) rotate(-3deg); }
+  75% { transform: translate(10px, 14px) scale(1.02) rotate(2deg); }
+}
+
+/* Popping: the blob bursts apart with force, a splash ring expands, and small
+   watery droplets fly outward and fall before fading. Respawns after a pause. */
+.clay-blob.is-popped {
+  animation: blob-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes blob-pop {
+  0% { transform: scale(1); opacity: 0.55; }
+  35% { transform: scale(1.35); opacity: 0.5; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.bubble-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--clay-shadow-light);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0.9;
+  animation: ripple-expand 0.6s ease-out forwards;
+}
+@keyframes ripple-expand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(9); opacity: 0; }
+}
+
+.bubble-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.bubble-burst span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.15) 60%),
+    var(--clay-shadow-light);
+  animation: bubble-burst-fly 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes bubble-burst-fly {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--burst-x)), calc(-50% + var(--burst-y) + 24px)) scale(0.25);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Entrance polish: fade + rise on mount */
+.clay-fade-in {
+  animation: clay-rise 0.5s ease-out both;
+}
+@keyframes clay-rise {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Debate cards: playful hover tilt */
+.clay-tilt {
+  transition: transform 0.2s ease;
+}
+.clay-tilt:hover {
+  transform: translateY(-4px) rotate(-1deg);
+}
+.clay-tilt.tilt-right:hover {
+  transform: translateY(-4px) rotate(1deg);
+}
+
+/* Claymorphism surface: soft puffy dual-tone shadow that visibly lifts off the page,
+   plus a faint tinted ring so the edge reads clearly against a similarly warm background. */
+.clay {
+  background: var(--clay-cream);
+  border-radius: 2rem;
+  border: 1px solid var(--clay-ring);
+  box-shadow:
+    14px 14px 28px var(--clay-shadow-dark),
+    -10px -10px 24px var(--clay-shadow-light),
+    0 2px 0 var(--clay-shadow-light) inset;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clay:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    18px 18px 34px var(--clay-shadow-dark),
+    -12px -12px 28px var(--clay-shadow-light),
+    0 2px 0 var(--clay-shadow-light) inset;
+}
+
+.clay-inset {
+  background: var(--clay-lavender);
+  border-radius: 1.25rem;
+  box-shadow:
+    inset 5px 5px 10px var(--clay-shadow-dark),
+    inset -5px -5px 10px var(--clay-shadow-light);
+}
+
+.clay-btn {
+  border-radius: 1.5rem;
+  border: 1px solid var(--clay-ring);
+  box-shadow:
+    8px 8px 18px var(--clay-shadow-dark),
+    -6px -6px 16px var(--clay-shadow-light);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.clay-btn:active:not(:disabled) {
+  transform: translateY(2px) scale(0.98);
+  box-shadow:
+    3px 3px 6px var(--clay-shadow-dark),
+    -3px -3px 6px var(--clay-shadow-light);
+}
+
+/* ---------- Agent mascot ---------- */
+
+.mascot-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  height: 140px;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.mascot-sprite {
+  image-rendering: pixelated;
+  filter: drop-shadow(4px 6px 6px var(--clay-shadow-dark));
+}
+
+.mascot-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.mascot-confetti span {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  width: 6px;
+  height: 10px;
+  opacity: 0;
+  animation: confetti-burst 0.9s ease-out forwards;
+}
+@keyframes confetti-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: var(--confetti-end) rotate(280deg); }
+}
+
+.mascot-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--clay-purple-dark);
+  background: var(--clay-lavender);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  box-shadow:
+    3px 3px 6px var(--clay-shadow-dark),
+    -3px -3px 6px var(--clay-shadow-light);
 }

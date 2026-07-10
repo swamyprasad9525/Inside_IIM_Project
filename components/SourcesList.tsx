@@ -4,21 +4,23 @@ export function SourcesList({ sources }: { sources: SourceItem[] }) {
   if (sources.length === 0) return null;
 
   return (
-    <div className="w-full max-w-2xl rounded-xl border border-black/10 p-6 dark:border-white/15">
-      <h3 className="mb-3 text-sm font-semibold">Sources</h3>
+    <div className="clay w-full max-w-2xl p-7">
+      <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-[var(--clay-purple-dark)]">
+        Sources
+      </h3>
       <ul className="space-y-2 text-sm">
         {sources.map((s) => (
-          <li key={s.id}>
-            <span className="text-black/30 dark:text-white/30">[{s.id}]</span>{" "}
+          <li key={s.id} className="clay-inset px-3 py-2">
+            <span className="text-[var(--foreground)]/30">[{s.id}]</span>{" "}
             <a
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-black/70 dark:hover:text-white/70"
+              className="underline underline-offset-2 hover:text-[var(--clay-purple-dark)]"
             >
               {s.title}
             </a>{" "}
-            <span className="text-xs text-black/40 dark:text-white/40">({s.category})</span>
+            <span className="text-xs text-[var(--foreground)]/40">({s.category})</span>
           </li>
         ))}
       </ul>

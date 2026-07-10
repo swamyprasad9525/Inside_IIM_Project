@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CompanyForm } from "@/components/CompanyForm";
 import { AgentProgress } from "@/components/AgentProgress";
+import { AgentMascot, type MascotState } from "@/components/AgentMascot";
+import { BubbleBlob } from "@/components/BubbleBlob";
 import { DecisionCard } from "@/components/DecisionCard";
 import { RubricBreakdown } from "@/components/RubricBreakdown";
 import { CaseCard } from "@/components/CaseCard";
@@ -10,12 +12,22 @@ import { SourcesList } from "@/components/SourcesList";
 import { FollowUpChat } from "@/components/FollowUpChat";
 import type { ResearchReport, StreamEvent } from "@/lib/types";
 
+const THINKING_PATTERN = /resolv|gap check|self-critique/i;
+
 export default function Home() {
   const [messages, setMessages] = useState<string[]>([]);
   const [report, setReport] = useState<ResearchReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  const mascotState: MascotState = useMemo(() => {
+    if (error) return "error";
+    if (report) return "success";
+    if (!isRunning) return "idle";
+    const last = messages[messages.length - 1] ?? "";
+    return THINKING_PATTERN.test(last) ? "thinking" : "running";
+  }, [error, report, isRunning, messages]);
 
   async function handleSubmit(company: string) {
     setMessages([]);
@@ -76,52 +88,73 @@ export default function Home() {
     abortRef.current?.abort();
   }
 
+  const isIdle = !isRunning && !report && !error;
+
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center gap-6 px-6 py-16">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold">AI Investment Research Agent</h1>
-        <p className="mt-2 text-sm text-black/50 dark:text-white/50">
-          Enter a company name. The agent researches it, debates the case for and against,
-          and gives you an Invest/Pass call with reasoning.
-        </p>
+    <>
+      <div className="clay-blobs">
+        <BubbleBlob className="clay-blob-1" />
+        <BubbleBlob className="clay-blob-2" />
+        <BubbleBlob className="clay-blob-3" />
+        <BubbleBlob className="clay-blob-4" />
+        <BubbleBlob className="clay-blob-5" />
       </div>
 
-      <div className="flex w-full max-w-xl flex-col items-center gap-2">
-        <CompanyForm onSubmit={handleSubmit} disabled={isRunning} />
-        {isRunning && (
-          <button
-            onClick={handleCancel}
-            className="text-xs text-black/40 underline underline-offset-2 hover:text-black/70 dark:text-white/40 dark:hover:text-white/70"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
-
-      {error && (
-        <div className="w-full max-w-2xl rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-          {error}
+      <main
+        className={`mx-auto flex w-full max-w-2xl flex-1 flex-col items-center gap-6 px-6 py-16 ${
+          isIdle ? "justify-center" : ""
+        }`}
+      >
+        <div className="clay-fade-in flex flex-col items-center text-center">
+          <AgentMascot state={mascotState} />
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--clay-purple-dark)]">
+            AI Investment Research Agent
+          </h1>
+          <p className="mt-2 text-sm text-[var(--foreground)]/60">
+            Enter a company name. The agent researches it, debates the case for and against,
+            and gives you an Invest/Pass call with reasoning.
+          </p>
         </div>
-      )}
 
-      <AgentProgress messages={messages} isDone={!isRunning && !!report} />
-
-      {report && (
-        <div className="flex w-full flex-col items-center gap-6">
-          <DecisionCard
-            entity={report.entity}
-            decision={report.decision}
-            selfReview={report.selfReview}
-          />
-          <RubricBreakdown rubric={report.rubric} />
-          <div className="flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
-            <CaseCard caseArg={report.bullCase} />
-            <CaseCard caseArg={report.bearCase} />
+        <div className="clay clay-fade-in w-full max-w-xl p-6" style={{ animationDelay: "0.1s" }}>
+          <div className="flex flex-col items-center gap-3">
+            <CompanyForm onSubmit={handleSubmit} disabled={isRunning} />
+            {isRunning && (
+              <button
+                onClick={handleCancel}
+                className="text-xs font-medium text-[var(--clay-purple-dark)]/60 underline underline-offset-2 hover:text-[var(--clay-purple-dark)]"
+              >
+                Cancel
+              </button>
+            )}
           </div>
-          <SourcesList sources={report.sources} />
-          <FollowUpChat report={report} />
         </div>
-      )}
-    </main>
+
+        {error && (
+          <div className="clay w-full max-w-2xl p-5 text-sm text-[var(--clay-peach-dark)]">
+            {error}
+          </div>
+        )}
+
+        <AgentProgress messages={messages} isDone={!isRunning && !!report} />
+
+        {report && (
+          <div className="flex w-full flex-col items-center gap-6">
+            <DecisionCard
+              entity={report.entity}
+              decision={report.decision}
+              selfReview={report.selfReview}
+            />
+            <RubricBreakdown rubric={report.rubric} />
+            <div className="flex w-full max-w-2xl flex-col gap-4 sm:flex-row">
+              <CaseCard caseArg={report.bullCase} />
+              <CaseCard caseArg={report.bearCase} />
+            </div>
+            <SourcesList sources={report.sources} />
+            <FollowUpChat report={report} />
+          </div>
+        )}
+      </main>
+    </>
   );
 }

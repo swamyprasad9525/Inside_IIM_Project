@@ -7,46 +7,47 @@ interface DecisionCardProps {
 }
 
 const CONFIDENCE_STYLES: Record<FinalDecision["confidence"], string> = {
-  High: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400",
-  Medium: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
-  Low: "bg-black/5 text-black/60 dark:bg-white/10 dark:text-white/50",
+  High: "bg-[var(--clay-mint)]/60 text-[var(--clay-mint-dark)]",
+  Medium: "bg-[var(--clay-peach)]/60 text-[var(--clay-peach-dark)]",
+  Low: "bg-[var(--clay-lavender)] text-[var(--foreground)]/60",
 };
 
 export function DecisionCard({ entity, decision, selfReview }: DecisionCardProps) {
   const isInvest = decision.verdict === "INVEST";
 
   return (
-    <div className="w-full max-w-2xl rounded-xl border border-black/10 p-6 dark:border-white/15">
+    <div className="clay w-full max-w-2xl p-7">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">{entity.resolvedName}</h2>
-          <p className="text-sm text-black/50 dark:text-white/50">
-            {entity.sector} · {entity.isPublic ? `Public${entity.tickerGuess ? ` (${entity.tickerGuess})` : ""}` : "Private"}
+          <h2 className="text-xl font-extrabold">{entity.resolvedName}</h2>
+          <p className="text-sm text-[var(--foreground)]/50">
+            {entity.sector} ·{" "}
+            {entity.isPublic ? `Public${entity.tickerGuess ? ` (${entity.tickerGuess})` : ""}` : "Private"}
           </p>
         </div>
         <span
-          className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold ${
+          className={`clay-btn shrink-0 px-5 py-2 text-sm font-extrabold text-white ${
             isInvest
-              ? "bg-green-100 text-green-800 dark:bg-green-500/15 dark:text-green-400"
-              : "bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-400"
+              ? "bg-gradient-to-br from-[var(--clay-mint-dark)] to-[#2f8f57]"
+              : "bg-gradient-to-br from-[var(--clay-peach-dark)] to-[#d9603a]"
           }`}
         >
-          {decision.verdict}
+          {isInvest ? "INVEST" : "PASS"}
         </span>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <span
-          className={`rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide ${CONFIDENCE_STYLES[decision.confidence]}`}
+          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${CONFIDENCE_STYLES[decision.confidence]}`}
         >
           Confidence: {decision.confidence}
         </span>
         {selfReview.wasRevised && (
           <span
-            className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"
+            className="rounded-full bg-[var(--clay-purple)]/20 px-3 py-1 text-xs font-bold text-[var(--clay-purple-dark)]"
             title={selfReview.note ?? undefined}
           >
-            ✓ Self-reviewed and revised for accuracy
+            ✓ Self-reviewed and revised
           </span>
         )}
       </div>
@@ -54,8 +55,8 @@ export function DecisionCard({ entity, decision, selfReview }: DecisionCardProps
       <p className="mt-4 text-sm leading-relaxed">{decision.thesis}</p>
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
+        <div className="clay-inset p-4">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--clay-mint-dark)]">
             Reasons for
           </p>
           <ul className="space-y-1 text-sm">
@@ -64,8 +65,8 @@ export function DecisionCard({ entity, decision, selfReview }: DecisionCardProps
             ))}
           </ul>
         </div>
-        <div>
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400">
+        <div className="clay-inset p-4">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--clay-peach-dark)]">
             Reasons against
           </p>
           <ul className="space-y-1 text-sm">
@@ -78,7 +79,7 @@ export function DecisionCard({ entity, decision, selfReview }: DecisionCardProps
 
       {decision.keyRisks.length > 0 && (
         <div className="mt-5">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-black/50 dark:text-white/50">
+          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--foreground)]/50">
             Key risks
           </p>
           <ul className="space-y-1 text-sm">

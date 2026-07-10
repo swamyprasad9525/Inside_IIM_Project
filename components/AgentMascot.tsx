@@ -2,15 +2,16 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-export type MascotState = "idle" | "thinking" | "running" | "success" | "error";
-
-const LABELS: Record<MascotState, string> = {
-  idle: "Ready when you are",
-  thinking: "Thinking…",
-  running: "Researching…",
-  success: "Hurray! Done",
-  error: "Hit a snag",
-};
+export type MascotSprite =
+  | "idle"
+  | "thinking"
+  | "running"
+  | "running-left"
+  | "running-right"
+  | "waiting"
+  | "waving"
+  | "success"
+  | "error";
 
 const CONFETTI_COLORS = ["#8b7ff5", "#a7efc2", "#ffc4ae", "#6a5de7", "#4fbf7a"];
 
@@ -52,9 +53,15 @@ const INTRO_FRAMES = [
 ];
 const INTRO_STEP_DELAYS = [350, 500, 300]; // ms between successive frames after the first
 
+interface AgentMascotProps {
+  sprite: MascotSprite;
+  label: string;
+  isActive: boolean;
+}
+
 // Drag-anywhere-on-the-page behaviour, kept local to this component: pointer events
 // only (no dependency), position stored as a fixed-layer offset from its default spot.
-export function AgentMascot({ state }: { state: MascotState }) {
+export function AgentMascot({ sprite, label, isActive }: AgentMascotProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef({ pointerX: 0, pointerY: 0, offsetX: 0, offsetY: 0 });
@@ -83,8 +90,6 @@ export function AgentMascot({ state }: { state: MascotState }) {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const isWandering = state === "thinking" || state === "running";
-
   // While researching, the pet wanders near its usual spot; dragging always takes
   // priority, and it settles back to its default spot once the run finishes. Kept
   // close to the header (mostly sideways, slightly up) so it never drifts down over
@@ -92,7 +97,7 @@ export function AgentMascot({ state }: { state: MascotState }) {
   useEffect(() => {
     if (dragging) return;
 
-    if (!isWandering) {
+    if (!isActive) {
       const frame = requestAnimationFrame(() => setOffset({ x: 0, y: 0 }));
       return () => cancelAnimationFrame(frame);
     }
@@ -110,7 +115,7 @@ export function AgentMascot({ state }: { state: MascotState }) {
     wander();
     const interval = setInterval(wander, 3200);
     return () => clearInterval(interval);
-  }, [isWandering, dragging]);
+  }, [isActive, dragging]);
 
   function handlePointerDown(e: React.PointerEvent) {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -158,15 +163,15 @@ export function AgentMascot({ state }: { state: MascotState }) {
       <div style={{ position: "relative", clipPath: introFrame.clip }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF sprite, no next/image processing needed */}
         <img
-          key={state}
-          src={`/mascot/${state}.gif`}
-          alt={LABELS[state]}
+          key={sprite}
+          src={`/mascot/${sprite}.gif`}
+          alt={label}
           width={96}
           height={104}
           className="mascot-sprite"
           draggable={false}
         />
-        {state === "success" && <Confetti />}
+        {sprite === "success" && <Confetti />}
       </div>
       <span
         className="mascot-label"
@@ -175,7 +180,7 @@ export function AgentMascot({ state }: { state: MascotState }) {
           transition: "opacity 0.25s ease",
         }}
       >
-        {LABELS[state]}
+        {label}
       </span>
     </div>
   );

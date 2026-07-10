@@ -14,7 +14,8 @@ export async function bearNode(state: GraphStateType) {
       "You are a skeptical investment analyst. Build the strongest HONEST case AGAINST investing in this company, using only the findings and rubric provided. Cite sourceIds for every point. Do not fabricate facts not present in the findings.",
       `Company: ${state.entity?.resolvedName}\n\nFindings:\n${JSON.stringify(
         state.findings
-      )}\n\nRubric:\n${JSON.stringify(state.rubric)}\n\nReturn JSON: { summary, points: [{claim, sourceIds}] }`
+      )}\n\nRubric:\n${JSON.stringify(state.rubric)}\n\nReturn JSON: { summary, points: [{claim, sourceIds}] }`,
+      { tier: "alt" }
     );
 
     return {

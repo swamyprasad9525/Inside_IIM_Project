@@ -1,7 +1,13 @@
-import type { CaseArgument } from "@/lib/types";
+import type { CaseArgument, SourceItem } from "@/lib/types";
 
-export function CaseCard({ caseArg }: { caseArg: CaseArgument }) {
+interface CaseCardProps {
+  caseArg: CaseArgument;
+  sources: SourceItem[];
+}
+
+export function CaseCard({ caseArg, sources }: CaseCardProps) {
   const isBull = caseArg.stance === "bull";
+  const sourceById = new Map(sources.map((s) => [s.id, s]));
 
   return (
     <div
@@ -19,7 +25,32 @@ export function CaseCard({ caseArg }: { caseArg: CaseArgument }) {
       <ul className="mt-3 space-y-1 text-sm text-[#3d2b28]">
         {caseArg.points.map((p, i) => (
           <li key={i}>
-            • {p.claim} <span className="text-[#3d2b28]/40">[{p.sourceIds.join(", ")}]</span>
+            • {p.claim}{" "}
+            <span className="text-[#3d2b28]/40">
+              [
+              {p.sourceIds.map((id, j) => {
+                const source = sourceById.get(id);
+                return (
+                  <span key={id}>
+                    {j > 0 && ", "}
+                    {source ? (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline underline-offset-2 hover:text-[#3d2b28]"
+                        title={source.title}
+                      >
+                        {id}
+                      </a>
+                    ) : (
+                      id
+                    )}
+                  </span>
+                );
+              })}
+              ]
+            </span>
           </li>
         ))}
       </ul>

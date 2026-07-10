@@ -24,7 +24,7 @@ export async function gapCheckNode(state: GraphStateType) {
       GapSchema,
       "You review research findings for an investment decision and identify if critical information is missing (e.g. no financial data found at all, or no risk information found). Only flag TRUE gaps that would materially change confidence in a decision — not minor details.",
       `Company: ${state.entity?.resolvedName}\n\nFindings so far:\n${findingsText}\n\nReturn JSON: { hasCriticalGaps, followUpQueries: [{query, category}] (max 3, only if hasCriticalGaps is true), reasoning }`,
-      { fast: true }
+      { tier: "fast" }
     );
 
     return {

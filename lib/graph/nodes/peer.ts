@@ -23,7 +23,7 @@ export async function peerNode(state: GraphStateType) {
       PeerSchema,
       "You identify the single closest publicly-traded competitor to a given company, for investment comparison purposes. Return null if you cannot confidently name one.",
       `Company: ${state.entity.resolvedName} (${state.entity.sector})\n\nReturn JSON: { peerCompanyName: string or null if unsure, peerTickerGuess: string (stock ticker) or null }`,
-      { fast: true }
+      { tier: "fast" }
     );
 
     if (!peerCompanyName) {

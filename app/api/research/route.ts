@@ -6,6 +6,27 @@ import type { StreamEvent } from "@/lib/types";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
+// Stay safely under maxDuration so we can send a clean error and close the stream
+// ourselves, instead of the platform silently killing the function mid-response and
+// leaving the client's fetch reader hanging with no explanation.
+const PIPELINE_TIMEOUT_MS = 270_000;
+
+function timeoutAfter(ms: number): Promise<never> {
+  return new Promise((_, reject) => {
+    setTimeout(
+      () =>
+        reject(
+          new Error(
+            `Research timed out after ${Math.round(
+              ms / 1000
+            )}s — this usually means the LLM provider is rate-limited or slow right now. Try again in a minute.`
+          )
+        ),
+      ms
+    );
+  });
+}
+
 export async function POST(req: NextRequest) {
   let company: string;
   try {
@@ -37,12 +58,15 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        await runResearchGraph(trimmedCompany, (event) => {
-          send(event);
-          if (event.type === "final" && event.report) {
-            setCachedReport(trimmedCompany, event.report);
-          }
-        });
+        await Promise.race([
+          runResearchGraph(trimmedCompany, (event) => {
+            send(event);
+            if (event.type === "final" && event.report) {
+              setCachedReport(trimmedCompany, event.report);
+            }
+          }),
+          timeoutAfter(PIPELINE_TIMEOUT_MS),
+        ]);
       } catch (err) {
         send({
           type: "error",

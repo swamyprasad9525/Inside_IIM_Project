@@ -1,8 +1,21 @@
 import { ChatOpenAI } from "@langchain/openai";
 import type { z } from "zod";
 
-let llmInstance: ChatOpenAI | null = null;
-let fastLlmInstance: ChatOpenAI | null = null;
+type Tier = "primary" | "fast" | "alt";
+
+const instances: Partial<Record<Tier, ChatOpenAI>> = {};
+
+const TIER_ENV_VAR: Record<Tier, string> = {
+  primary: "NVIDIA_NIM_MODEL",
+  fast: "NVIDIA_NIM_FAST_MODEL",
+  alt: "NVIDIA_NIM_ALT_MODEL",
+};
+
+const TIER_DEFAULT_MODEL: Record<Tier, string> = {
+  primary: "meta/llama-3.1-70b-instruct",
+  fast: "meta/llama-3.1-8b-instruct",
+  alt: "nvidia/llama-3.3-nemotron-super-49b-v1",
+};
 
 function buildClient(model: string): ChatOpenAI {
   const apiKey = process.env.NVIDIA_NIM_API_KEY;
@@ -20,24 +33,19 @@ function buildClient(model: string): ChatOpenAI {
   });
 }
 
-export function getLLM(): ChatOpenAI {
-  if (!llmInstance) {
-    llmInstance = buildClient(process.env.NVIDIA_NIM_MODEL || "meta/llama-3.1-70b-instruct");
-  }
-  return llmInstance;
-}
-
 /**
- * A smaller/faster model for lightweight steps (entity resolution, gap checks, naming a
- * competitor, contradiction review) that don't need the full 70B model's reasoning depth.
- * Cuts overall pipeline latency without touching the quality of the steps that matter most
- * (synthesis, rubric scoring, the bull/bear debate, and the final decision).
+ * Three separate NIM model deployments (70B / 8B / Nemotron-49B) used across different
+ * pipeline steps. This isn't just a latency optimization — since NIM's free tier tracks
+ * rate limits per model deployment, spreading the ~9 calls a single research run makes
+ * across three distinct models reduces how often any one of them gets rate-limited.
+ * Not a guaranteed fix (if NIM throttles per-account rather than per-model this won't
+ * help), but it's a one-line-per-call change worth having regardless.
  */
-export function getFastLLM(): ChatOpenAI {
-  if (!fastLlmInstance) {
-    fastLlmInstance = buildClient(process.env.NVIDIA_NIM_FAST_MODEL || "meta/llama-3.1-8b-instruct");
+export function getLLM(tier: Tier = "primary"): ChatOpenAI {
+  if (!instances[tier]) {
+    instances[tier] = buildClient(process.env[TIER_ENV_VAR[tier]] || TIER_DEFAULT_MODEL[tier]);
   }
-  return fastLlmInstance;
+  return instances[tier];
 }
 
 function extractJson(text: string): string {
@@ -49,20 +57,33 @@ function extractJson(text: string): string {
   return text.slice(start, end + 1);
 }
 
+function isRetryableError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return message.includes("429") || /abort|timeout/i.test(message);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
- * Prompt-based structured output with a one-shot repair retry, used instead of
- * native tool-calling because open-weight models served via NIM have inconsistent
- * function-calling support. This works uniformly across any OpenAI-compatible endpoint.
+ * Prompt-based structured output with retries, used instead of native tool-calling
+ * because open-weight models served via NIM have inconsistent function-calling support.
+ * This works uniformly across any OpenAI-compatible endpoint.
+ *
+ * Retries on a 429 wait before trying again (2s, then 5s) instead of immediately
+ * re-hitting the same rate limit window — immediate retries just fail the same way.
  */
 export async function structuredCall<T>(
   schema: z.ZodType<T>,
   systemPrompt: string,
   userPrompt: string,
-  opts?: { fast?: boolean }
+  opts?: { tier?: Tier }
 ): Promise<T> {
-  const llm = opts?.fast ? getFastLLM() : getLLM();
+  const llm = getLLM(opts?.tier ?? "primary");
   const jsonInstruction =
     "\n\nRespond with ONLY a single valid JSON object matching the required shape. No markdown code fences, no commentary, no text before or after the JSON.";
+  const RETRY_BACKOFF_MS = [2000, 5000];
 
   let lastError = "";
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -71,12 +92,23 @@ export async function structuredCall<T>(
         ? userPrompt + jsonInstruction
         : `${userPrompt}${jsonInstruction}\n\nYour previous response failed validation with this error:\n${lastError}\nFix it and return only valid JSON.`;
 
-    const res = await llm.invoke([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: prompt },
-    ]);
-
-    const text = typeof res.content === "string" ? res.content : JSON.stringify(res.content);
+    let text: string;
+    try {
+      const res = await llm.invoke(
+        [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        { timeout: 100000 }
+      );
+      text = typeof res.content === "string" ? res.content : JSON.stringify(res.content);
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      if (isRetryableError(err) && attempt < RETRY_BACKOFF_MS.length) {
+        await sleep(RETRY_BACKOFF_MS[attempt]);
+      }
+      continue;
+    }
 
     try {
       const jsonStr = extractJson(text);

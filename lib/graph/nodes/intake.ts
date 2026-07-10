@@ -15,7 +15,7 @@ export async function intakeNode(state: GraphStateType) {
     EntitySchema,
     "You resolve a possibly ambiguous or loosely-typed company name into a specific, well-known company entity for investment research. If the name is ambiguous (e.g. a common word), pick the most likely well-known company and explain the assumption in notes.",
     `Company name provided by user: "${state.companyInput}"\n\nReturn JSON: { resolvedName, sector, isPublic, tickerGuess (stock ticker or null if private/unknown), notes }`,
-    { fast: true }
+    { tier: "fast" }
   );
 
   return {

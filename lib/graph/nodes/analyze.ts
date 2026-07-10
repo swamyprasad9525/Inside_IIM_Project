@@ -30,7 +30,8 @@ export async function analyzeNode(state: GraphStateType) {
     `You score a company against a fixed 5-factor investment rubric using ONLY the findings provided, citing sourceIds for each score. Factors: ${RUBRIC_FACTORS.join(
       ", "
     )}. Score each 1-5. If evidence for a factor is thin or missing, score conservatively (around 3) rather than guessing at an extreme.`,
-    `Company: ${state.entity?.resolvedName}\n\nFindings:\n${findingsText}\n\nReturn JSON: { factors: [{factor, score, justification, sourceIds}] (all 5 factors), overallWeightedScore (average of the 5 scores, 1-5) }`
+    `Company: ${state.entity?.resolvedName}\n\nFindings:\n${findingsText}\n\nReturn JSON: { factors: [{factor, score, justification, sourceIds}] (all 5 factors), overallWeightedScore (average of the 5 scores, 1-5) }`,
+    { tier: "alt" }
   );
 
   return {

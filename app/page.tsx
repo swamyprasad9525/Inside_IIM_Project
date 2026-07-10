@@ -189,10 +189,10 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-6">
                 <div className="clay-fade-in" style={{ animationDelay: "0.16s" }}>
-                  <CaseCard caseArg={report.bullCase} />
+                  <CaseCard caseArg={report.bullCase} sources={report.sources} />
                 </div>
                 <div className="clay-fade-in" style={{ animationDelay: "0.22s" }}>
-                  <CaseCard caseArg={report.bearCase} />
+                  <CaseCard caseArg={report.bearCase} sources={report.sources} />
                 </div>
                 <div className="clay-fade-in" style={{ animationDelay: "0.3s" }}>
                   <FollowUpChat report={report} />
